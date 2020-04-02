@@ -283,12 +283,6 @@ handles.gallery_roi_mat = gallery_roi_mat;
 handles.gallery_roi_mat_sorted = gallery_roi_mat_sorted;
 
 
-%get location of dx and dy for gallery
-% % % img_stats = regionprops(imregionalmin(handles.neuron_struct.Cn));
-% % % stats_area = arrayfun(@(x) x.Area, img_stats);
-% % % min_centroid = img_stats(find(stats_area == max(stats_area)),1).Centroid;
-% % % handles.dx_min = min_centroid(1);
-% % % handles.dy_min = min_centroid(2);
 handles.dx_min = floor(d2s/2);
 handles.dy_min = floor(d1s/2);
 
@@ -296,8 +290,14 @@ handles.dy_min = floor(d1s/2);
 waitbar(.95,f,'Loading roi contours...');
 handles.patch_vdata_cell = neuron_struct.get_contours(handles.roi_compactness);
 close(f)
-figure(gcf), axes(handles.main_axes), hold on,
-set(gca,'xtick',0,'ytick',0);
+figure(gcf), axes(handles.main_axes), hold on;
+imagesc(handles.neuron_struct.Cn,handles.mean_frame_clim);
+xlim([0 handles.img_dim(2)])
+ylim([0  handles.img_dim(1)])
+text(handles.dx_min,handles.dy_min,{'Running on','Fast Mode'},'color','r',...
+    'fontsize',40,'fontweight','bold','horizontalalignment','center')
+set(gca,'xtick',[],'ytick',[]);
+
 
 %use fast display GUI
 
@@ -309,15 +309,6 @@ if (handles.plot_ca_raw_trace == 1)
     set(handles.ca_raw_trace_axes,'visible','on');
     linkaxes([handles.ca_clean_trace_axes, handles.ca_raw_trace_axes],'x');
 end
-
-
-% main_axes_select_h = plot(roi_centroid_mat(1,1),roi_centroid_mat(1,2));
-% Update handles structure
-% guidata(hObject, handles);
-
-
-
-
 
 
 % Update handles structure
@@ -344,33 +335,14 @@ if (handles.fast_mode == 0)
             %         colormap gray
             roi_x = handles.roi_centroid_mat(:,2);
             roi_y = handles.roi_centroid_mat(:,1);
-            % % %         %plot centroids of ROIs
-            % % %         plot(roi_x(handles.valid_roi_id(:,1) == 1), roi_y(handles.valid_roi_id(:,1) == 1),...
-            % % %             'o',...
-            % % %             'markersize',handles.selected_marker_size,...
-            % % %             'MarkerEdgeColor', handles.marker_color_edge,...
-            % % %             'MarkerFaceColor', handles.marker_color_on);
+            
             % plot roi contour AYAL 6/5/2019
             patch_vdata_cell = handles.patch_vdata_cell;
             handles.main_axes_del_roi_seg_h = [];
             Nroi=handles.Nroi;
             for roi_ind = 1:Nroi
                 
-                % % %             roi = handles.roi_mat(:,:,roi_ind);
-                % % %             [max_pxl,idx] = max(roi(:));
-                % % %             [center(roi_ind,2),center(roi_ind,1)] = ind2sub(size(roi),idx);
-                % % %             bwroi = int8(roi >= max_pxl*handles.pxl_th);
-                % % %             [roi_pxl_list, roi_pxl] = bwboundaries(bwroi,'noholes');
-                % % %
-                % % %             roi_centroids = regionprops(roi_pxl,'centroid');
-                % % %             %if more than one roi, select the closest one to max centroid
-                % % %             nnroi_idx = 1;
-                % % %             if length(roi_centroids) > 1
-                % % %                 centroid_mat = cell2mat(arrayfun(@(x) x.Centroid,roi_centroids,'UniformOutput',0));
-                % % %                 nnroi_idx = knnsearch(centroid_mat,center(roi_ind,:));
-                % % %             end
-                % % %             match_roi_pxl_list = roi_pxl_list{nnroi_idx};
-                % % %             patch_vdata = match_roi_pxl_list(:,[2 1]);
+                
                 patch_vdata = patch_vdata_cell{roi_ind};
                 %plot patch
                 handles.main_axes_del_roi_seg_h(roi_ind) = ...
@@ -388,22 +360,7 @@ if (handles.fast_mode == 0)
                 'MarkerEdgeColor', handles.marker_color_edge,...
                 'MarkerFaceColor', handles.marker_color_on);
 
-            %plot deleted
-            % % %     plot(roi_x(handles.valid_roi_id(:,1) == 0), roi_y(handles.valid_roi_id(:,1) == 0),'o',...
-            % % %         'markersize',handles.selected_marker_size,...
-            % % %         'MarkerEdgeColor', handles.marker_color_edge,...
-            % % %         'MarkerFaceColor', handles.del_marker_color);
-            % % %     %plot SELECTED
-            % % %     handles.main_axes_select_h = plot(roi_x(handles.chosen_roi_id),roi_y(handles.chosen_roi_id),...
-            % % %         'marker','o',...
-            % % %         'markersize',handles.selected_marker_size,...
-            % % %         'MarkerEdgeColor', handles.marker_color_edge,...
-            % % %         'MarkerFaceColor', handles.marker_color_selected);
-            % % %     xtick_vec = [0];
-            % % %     ytick_vec = [0];
-            % % %     set(gca,'xtick',xtick_vec, 'ytick',ytick_vec);
-            %     set(gca,'xgrid','off','ygrid','off');
-            %     title_text = sprintf('ROI #%d (%.4f)',chosen_roi_id(1), handles.roi_score(chosen_roi_id(1)));
+            
         case 2
             %ROI gallery
             %     cla
@@ -433,38 +390,8 @@ if (handles.fast_mode == 0)
             line([d2s:d2s:d2l;d2s:d2s:d2l],[zeros(1,Ncol); ones(1,Ncol)*d1l],'color',[0 0 0]);
             line([zeros(1,Nrow); ones(1,Nrow)*d2l],[d1s:d1s:d1l;d1s:d1s:d1l],'color',[0 0 0]);
             
-            
-            
-            % % %     % color empty slots in gallery
-            % % %     Nempty_slots = Ncol*Nrow - Nroi;
-            % % %     if Nempty_slots > 0
-            % % %         addMat = reshape(zeros(d1s,d2s*(Ncol*Nrow-Nroi)),d1s,d2s,(Ncol*Nrow-Nroi) );
-            % % %         addMat_x = d2l - Nempty_slots*d2s;
-            % % %         addMat_y = d1l - d1s;
-            % % %         CData = get(gca,'Cdata');
-            % % %         newCData = CData;
-            % % %         newCData(addMat_x:d2l,addMat_y:d1l) = addMat;
-            % % %         set(gca,'CData',newCData);
-            % % % %         handles.empty_gal_roi
-            % % %     end
-            
-            %add grid
-            
-            
-            
             drawnow
-            % % %     %plot SELECTED
-            % % %     row = ceil(chosen_roi_gal_pos/Ncol);
-            % % %     col = 1+mod(chosen_roi_gal_pos-1,Ncol);
-            % % %     x1 = (col-1)*d2s; x2 = col*d2s;
-            % % %     y1 = (row-1)*d1s; y2 = row*d1s;
-            % % %     handles.main_axes_select_h = line([x1 x2 x1 x1;x1 x2 x2 x2], [y1 y1 y1 y2;y2 y2 y1 y2],'color',handles.marker_color_selected);
-            % % %     set(gca,'xgrid','off','ygrid','off');
-            % % %     xtick_vec = [handles.img_dim(2):handles.img_dim(2):handles.gal_dim(2)];
-            % % %     ytick_vec = [handles.img_dim(1):handles.img_dim(1):handles.gal_dim(1)];
-            % % %     set(gca,'xtick',xtick_vec, 'ytick',ytick_vec);
-            % % %     set(gca,'xgrid','on','ygrid','on');
-            
+               
     end
     
 end
@@ -617,15 +544,7 @@ if (handles.fast_mode == 0)
                         'markersize',handles.selected_marker_size,...
                         'MarkerEdgeColor', handles.marker_color_edge,...
                         'MarkerFaceColor', handles.marker_color_selected);
-                    % % %
-                    % % %                 handles.main_axes_multi_select_h{chosen_roi_ind}(1) = ...
-                    % % %                     line([x1;x1],[y1;y2] ,'color',handles.marker_color_selected);
-                    % % %                 handles.main_axes_multi_select_h{chosen_roi_ind}(2) = ...
-                    % % %                     line([x2;x2],[y1;y2],'color',handles.marker_color_selected);
-                    % % %                 handles.main_axes_multi_select_h{chosen_roi_ind}(3) = ...
-                    % % %                     line([x1;x2],[y1;y1],'color',handles.marker_color_selected);
-                    % % %                 handles.main_axes_multi_select_h{chosen_roi_ind}(4) = ...
-                    % % %                     line([x1;x2],[y2;y2],'color',handles.marker_color_selected);
+                    
                 end
             
         end
@@ -640,8 +559,7 @@ function update_roi_display(handles)
 figure(gcf), axes(handles.roi_axes), hold on,
 set(gca,'xtick',[],'ytick',[]);
 axis ij
-% xlim([0 handles.img_dim(2)])
-% ylim([0  handles.img_dim(1)])
+
 
 if isempty(handles.chosen_roi_id)
     figure(gcf), axes(handles.roi_axes), cla
@@ -665,13 +583,6 @@ else
                 chosen_roi_gal_pos = find(handles.roi_id(:,2) == chosen_roi_id);
                 roi_score = handles.roi_score_sorted(chosen_roi_gal_pos);
             end
-%         case 3
-% %             colormap(handles.roi_axes_colormap)
-% %             text(handles.img_dim(2)/2,handles.img_dim(1)/2,{'Click below to','load ROI video'},'fontweight','bold','fontsize',16,'horizontalalignment','center')
-%             imagesc(squeeze(handles.ROI_video(:,:,1)),[100 200]);
-%             xlim([0 size(handles.ROI_video,2)])
-%             ylim([0 size(handles.ROI_video,1)])
-%             roi_score = handles.roi_score(handles.chosen_roi_id(end));
     end
     if (handles.valid_roi_id(chosen_roi_id,1) == 0)
         [y,x] = size(handles.roi_mat(:,:,chosen_roi_id(end)));
@@ -683,16 +594,13 @@ else
     sort_idx = find(handles.roi_id(:,handles.sort_mode) == chosen_roi_id);
     title_text = sprintf('ROI #%d (%d) of %d (%.4f)',chosen_roi_id(end),sort_idx, handles.Nroi, roi_score);
     set(handles.roi_title_txt,'string',title_text);
+    xlim([0 handles.img_dim(2)])
+    ylim([0  handles.img_dim(1)])
     drawnow()
     %update Ca trace display
     update_ca_trace_display(handles);
     
-% % %     drawnow()
-% % %     figure(handles.figure1)
 end
-
-% % % % Update handles structure
-% % % guidata(hObject, handles);
 
 
 function update_ca_trace_display(handles)
@@ -743,41 +651,6 @@ if (handles.plot_ca_clean_trace == 1)
     end
     drawnow()
 end
-
-% % % drawnow
-% % % xlim([0 handles.img_dim(2)])
-% % % ylim([0  handles.img_dim(1)])
-
-
-
-% % % idx = 1;
-% % % 
-% % % figure(10), plot(ds.C(idx,:),'b')
-% % % sv = ds.S(idx,:);
-% % % spk = sv(sv >0);
-% % % col_mat = jet(10);
-% % % figure(11), hist(sv)
-% % % figure(11), hist(sv(sv>0),15)
-% % % figure(11), hist(spk,15)
-% % % spk_bin = logspace(log10(100),log10(1000),10);
-% % % col_mat = jet(15);
-% % % 
-% % % idx_vec = knnsearch(spk_bin',spk');
-% % % spk_t = ds.C(idx, sv>0);
-% % % spk_ind = find(sv >0);
-% % % figure(10), hold on, plot(spk_ind(idx_vec == 1), spk_t(idx_vec == 1),'.','color',5+1);
-% % % figure(10), hold on, plot(spk_ind(idx_vec == 2), spk_t(idx_vec == 2),'.','color',5+2);
-% % % figure(10), hold on, plot(spk_ind(idx_vec == 2), spk_t(idx_vec == 2),'.','color',col_mat(5+2,:));
-% % % figure(10), hold on, plot(spk_ind(idx_vec == 3), spk_t(idx_vec == 3),'.','color',col_mat(5+3,:));
-% % % ii = 4; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % ii = 5; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % ii = 6; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % ii = 7; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % ii = 8; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % ii = 9; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % ii = 10; figure(10), hold on, plot(spk_ind(idx_vec == ii), spk_t(idx_vec == ii),'.','color',col_mat(5+ii,:));
-% % % 
-% % %     
 
 
 % --- Outputs from this function are returned to the command line.
@@ -864,11 +737,7 @@ if isfield(handles,'main_axes_multi_select_h')
     del_cell = cellfun(@(x) intersect(get(gca,'Children'),x),handles.main_axes_multi_select_h,'UniformOutput',0);
     cellfun(@(y) delete(y),del_cell(~isempty(del_cell)));
 end
-% % % if isfield(handles,'main_axes_multi_select_h')
-% % %     %delete previous multi-choice
-% % %     cellfun(@(x) delete(x),handles.main_axes_multi_select_h);
-% % % end
-%cleat struct
+
 handles.main_axes_multi_select_h = {};
 handles.main_axes_multi_select_display_mode_h = [handles.display_mode, handles.sort_mode];
 
@@ -953,9 +822,6 @@ while but == 1
     [xi, yi, but] = ginput(1);
     mark = [xi, yi];
 end
-% % % if isempty(handles.chosen_roi_id)
-% % %     handles.chosen_roi_id = prev_chose_roi_id;
-% % % end
 % Update handles structure
 guidata(hObject, handles);
 
@@ -973,7 +839,6 @@ end
 chosen_roi_id = handles.chosen_roi_id;
 handles.valid_roi_id(chosen_roi_id,1) = 0;
 % Update handles structure
-guidata(hObject, handles);
 handles = update_del_display(handles,hObject);
 % Update handles structure
 guidata(hObject, handles);
@@ -990,20 +855,6 @@ if isempty(del_roi_id)
 end
 
 
-% % % if handles.fast_mode == 1
-% % %     update_roi_display(handles)
-% % %     return
-% % % end
-
-% % % %clean selection
-% % % if isfield(handles,'main_axes_multi_select_h')
-% % %     %delete previous graphical multi-choice
-% % %     del_cell = cellfun(@(x) intersect(get(gca,'Children'),x),handles.main_axes_multi_select_h,'UniformOutput',0);
-% % %     cellfun(@(y) delete(y),del_cell(~isempty(del_cell)));
-% % % end
-% % % %cleat struct
-% % % handles.main_axes_multi_select_h = {};
-
 if (handles.fast_mode == 0)
     figure(gcf), axes(handles.main_axes), hold on,
     %clean del graphics
@@ -1015,51 +866,17 @@ if (handles.fast_mode == 0)
     end
     handles.main_axes_del_roi_h = {};
     
-%     patch_h = findobj('type','patch');
     set(handles.main_axes_del_roi_seg_h(:),'visible','on')
-%     if isfield(handles,'main_axes_del_roi_seg_h')
-%        delete(findobj('type', 'patch'));
-%        drawnow
-%        
-%     end
-%     %cleat struct 
-%     handles.main_axes_del_roi_seg_h = {};
+
     
     d1s = handles.img_dim(1);
     d2s = handles.img_dim(2);
-% % %     d1l = handles.gal_dim(1);
-% % %     d2l = handles.gal_dim(2);
-% % %     
+ 
     Ndel_roi = length(del_roi_id);
     %update new del graphics
     switch handles.display_mode
         case 1 %mean frame
             %plot contour
-% % %             Nroi=handles.Nroi;
-% % %             for roi_ind = 1:Nroi
-% % %                 if (handles.valid_roi_id(roi_ind) == 1)
-% % %                     roi = handles.roi_mat(:,:,roi_ind);
-% % %                     [max_pxl,idx] = max(roi(:));
-% % %                     [center(roi_ind,2),center(roi_ind,1)] = ind2sub(size(roi),idx);
-% % %                     bwroi = int8(roi >= max_pxl*handles.pxl_th);
-% % %                     [roi_pxl_list, roi_pxl] = bwboundaries(bwroi,'noholes');
-% % %                     
-% % %                     roi_centroids = regionprops(roi_pxl,'centroid');
-% % %                     %if more than one roi, select the closest one to max centroid
-% % %                     nnroi_idx = 1;
-% % %                     if length(roi_centroids) > 1
-% % %                         centroid_mat = cell2mat(arrayfun(@(x) x.Centroid,roi_centroids,'UniformOutput',0));
-% % %                         nnroi_idx = knnsearch(centroid_mat,center(roi_ind,:));
-% % %                     end
-% % %                     match_roi_pxl_list = roi_pxl_list{nnroi_idx};
-% % %                     patch_vdata = match_roi_pxl_list(:,[2 1]);
-% % %                     %plot patch
-% % %                     handles.main_axes_del_roi_seg_h{roi_ind} = ...
-% % %                         patch('Faces',[1:size(patch_vdata,1)],'Vertices',patch_vdata,...
-% % %                         'FaceColor',handles.seg_color,'FaceAlpha',handles.roi_transparency,...
-% % %                         'EdgeColor',handles.seg_color);
-% % %                 end
-% % %             end
             
             for del_roi_ind = 1:Ndel_roi
                 point_vec = [handles.roi_centroid_mat(:,2) handles.roi_centroid_mat(:,1)];
@@ -1094,67 +911,11 @@ if (handles.fast_mode == 0)
                     'markersize',handles.deleted_marker_size,...
                     'MarkerEdgeColor', handles.del_marker_color,...
                     'MarkerFaceColor', handles.del_marker_color);
-% % %                 
-% % %                 handles.main_axes_del_roi_h{del_roi_ind}(1) = ...
-% % %                     line([x1;x1],[y1;y2] ,'color',handles.del_marker_color);
-% % %                 handles.main_axes_del_roi_h{del_roi_ind}(2) = ...
-% % %                     line([x2;x2],[y1;y2],'color',handles.del_marker_color);
-% % %                 handles.main_axes_del_roi_h{del_roi_ind}(3) = ...
-% % %                     line([x1;x2],[y1;y1],'color',handles.del_marker_color);
-% % %                 handles.main_axes_del_roi_h{del_roi_ind}(4) = ...
-% % %                     line([x1;x2],[y2;y2],'color',handles.del_marker_color);
+
             end
         
     end
 end
-% % % % Update handles structure
-% % % guidata(hObject, handles);
-% % % 
-% % % 
-% % % %%%%%%%%%%%%55
-% % % 
-% % % 
-% % % 
-% % % if isfield(handles,'main_axes_del_h')
-% % %     delete(handles.main_axes_del_h);
-% % % end
-% % % d1s = handles.img_dim(1);
-% % % d2s = handles.img_dim(2);
-% % % d1l = handles.gal_dim(1);
-% % % d2l = handles.gal_dim(2);
-% % % figure(gcf), axes(handles.main_axes), hold on,
-% % % axis ij
-% % % del_roi_id = find(handles.valid_roi_id == 0);
-% % % Ndel = length(del_roi_id);
-% % % X = []; Y = [];
-% % % 
-% % % switch handles.display_mode
-% % %     case 1
-% % %           
-% % % %         for del_ind = 1:Ndel
-% % %             X = handles.roi_centroid_mat(del_roi_id,2); 
-% % %             Y = handles.roi_centroid_mat(del_roi_id,1);
-% % % %         end  
-% % %             handles.main_axes_del_h = plot(X', Y','linestyle','none','marker','o',...
-% % %                 'markersize',handles.selected_marker_size,...
-% % %                 'MarkerEdgeColor', handles.marker_color_edge,...
-% % %                 'MarkerFaceColor', [0 0 0]);
-% % % %                 'MarkerFaceColor', handles.del_marker_color);
-% % % 
-% % %     case 2
-% % %         Ncol = ceil(handles.Nroi/floor(handles.Nroi^.5));
-% % %         for del_ind = 1:Ndel
-% % %             del_idx = find(handles.roi_id(:,handles.sort_mode) == del_roi_id(del_ind));
-% % %             row = ceil(del_idx/Ncol);
-% % %             col = 1+mod(del_idx-1,Ncol);
-% % %             x1 = (col-1)*d2s; x2 = col*d2s;
-% % %             y1 = (row-1)*d1s; y2 = row*d1s;
-% % %             X = [X [x1 x2 x1 x1;x1 x2 x2 x2]];
-% % %             Y = [Y [y1 y1 y1 y2;y2 y2 y1 y2]];
-% % %         end
-% % %         handles.main_axes_del_h = line(X, Y,'color',handles.del_marker_color);
-% % %        
-% % % end
 % Update handles structure
 guidata(hObject, handles);
 
@@ -1182,12 +943,7 @@ switch rad_btn_sel
        handles.enable_neuron_order = 1;
        set(handles.original_order_radbtn,'enable','on');
        set(handles.sorted_order_radbtn,'enable','on');
-       
-%     case 'disp_roi_vid_radbtn'
-%         handles.display_mode = 3;
-%         handles.enable_neuron_order = 0;
-%         set(handles.original_order_radbtn,'enable','off');
-%         set(handles.sorted_order_radbtn,'enable','off');
+
 end
 
 
@@ -1221,20 +977,6 @@ handles = update_display(hObject, handles);
 % Update handles structure
 guidata(hObject, handles);
 
-
-% --- Executes on mouse press over axes background.
-function main_axes_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to main_axes (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% % % if ismember('control', get(hObject,'currentModifier'))
-% % %     inhibitZoom = 0;
-% % % else
-% % %     inhibitZoom = 1;
-% % % end
-% % % 
-
 % --- Executes on key press with focus on figure1 or any of its controls.
 function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
@@ -1246,16 +988,6 @@ function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
 key_press(hObject, eventdata, handles)
 % figure1_KeyPressFcn(hObject, eventdata, handles)
 
-
-% --- Executes on key press with focus on figure1 and none of its controls.
-function figure1_KeyPressFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
-% eventdata  structure with the following fields (see FIGURE)
-%	Key: name of the key that was pressed, in lower case
-%	Character: character interpretation of the key(s) that was pressed
-%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
-% handles    structure with handles and user data (see GUIDATA)
-% key_press(hObject, eventdata, handles)
 
 function key_press(hObject, eventdata, handles)
 if isempty(handles.chosen_roi_id)
@@ -1409,22 +1141,6 @@ set(handles.img_mode_pnl,'visible','off');
 set(handles.neu_order_pnl,'visible','on');
 figure1_CloseRequestFcn(hObject, eventdata, handles)
 uiresume(handles.figure1);
-% close(handles.figure1);
-
-
-
-
-
-% % % % --- Executes on mouse press over figure background, over a disabled or
-% % % % --- inactive control, or over an axes background.
-% % % function figure1_WindowButtonDownFcn(hObject, eventdata, handles)
-% % % % hObject    handle to figure1 (see GCBO)
-% % % % eventdata  reserved - to be defined in a future version of MATLAB
-% % % % handles    structure with handles and user data (see GUIDATA)
-% % % % disp(eventdata)
-% % % % % C = get (gca, 'CurrentPoint');
-% % % % % disp(['(X,Y) = (', num2str(C(1,1)), ', ',num2str(C(1,2)), ')']);
-% % % 
 
 % --- Executes on button press in prev_roi_btn.
 function prev_roi_btn_Callback(hObject, eventdata, handles)
@@ -1442,19 +1158,6 @@ guidata(hObject, handles);
 
 update_roi_display(handles);
 
-% % % prev_idx = 1+mod((idx-1)-1,Nroi);
-% % % handles.chosen_roi_id = new_roi_id;
-% % % % Update handles structure
-% % % guidata(hObject, handles);
-
-% % % chosen_roi_id = handles.chosen_roi_id;
-% % % Nroi = handles.Nroi;
-% % % new_roi_id = 1+mod((chosen_roi_id-1)-1,Nroi);
-% % % handles.chosen_roi_id = new_roi_id;
-% % % % Update handles structure
-% % % guidata(hObject, handles);
-
-
 % --- Executes on button press in next_roi_btn.
 function next_roi_btn_Callback(hObject, eventdata, handles)
 % hObject    handle to next_roi_btn (see GCBO)
@@ -1471,16 +1174,6 @@ handles.chosen_roi_id = new_roi_id;
 guidata(hObject, handles);
 
 update_roi_display(handles);
-% % % 
-% % % 
-% % % chosen_roi_id = handles.chosen_roi_id;
-% % % Nroi = handles.Nroi;
-% % % new_roi_id = 1+mod((chosen_roi_id+1)-1,Nroi);
-% % % handles.chosen_roi_id = new_roi_id;
-% % % % Update handles structure
-% % % guidata(hObject, handles);
-
-
 
 % --- Executes on button press in finish_roi_btn.
 function finish_roi_btn_Callback(hObject, eventdata, handles)
@@ -1500,14 +1193,6 @@ handles.fast_mode = 0;
 handles = update_display(hObject, handles);
 % Update handles structure
 guidata(hObject, handles);
-
-
-% --- Executes on mouse press over figure background.
-function figure1_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% % % disp('figure down')
 
 % --- Executes on mouse press over figure background, over a disabled or
 % --- inactive control, or over an axes background.
@@ -1576,8 +1261,7 @@ if handles.mouse_select == 1
                 handles.chosen_roi_id(exist_ind) = [];
             else
                 
-                
-                
+                               
                 Ncol = ceil(handles.Nroi/floor(handles.Nroi^.5));
                 row = ceil(idx/Ncol);
                 col = 1+mod(idx-1,Ncol);
@@ -1594,17 +1278,6 @@ if handles.mouse_select == 1
                 % Update handles structure
                 guidata(hObject, handles);
                     
-                
-% % %                 end_ind = length(handles.main_axes_mouse_select_h);
-% % %                 
-% % %                 handles.main_axes_multi_select_h{end_ind+1}(1) = ...
-% % %                     line([x1;x1],[y1;y2] ,'color',handles.marker_color_selected);
-% % %                 handles.main_axes_multi_select_h{end_ind+1}(2) = ...
-% % %                     line([x2;x2],[y1;y2],'color',handles.marker_color_selected);
-% % %                 handles.main_axes_multi_select_h{end_ind+1}(3) = ...
-% % %                     line([x1;x2],[y1;y1],'color',handles.marker_color_selected);
-% % %                 handles.main_axes_multi_select_h{end_ind+1}(4) = ...
-% % %                     line([x1;x2],[y2;y2],'color',handles.marker_color_selected);
             end
     end
     drawnow()
@@ -1616,9 +1289,6 @@ if handles.mouse_select == 1
     guidata(hObject, handles);
 
 end
-% % % disp('window down')
-% % % C = get (gca, 'CurrentPoint');
-% % % title(gca, ['(X,Y) = (', num2str(C(1,1)), ', ',num2str(C(1,2)), ')']);
 
 % --- Executes on button press in first_roi_btn.
 function first_roi_btn_Callback(hObject, eventdata, handles)
@@ -1649,13 +1319,6 @@ guidata(hObject, handles);
 update_roi_display(handles);
 
 
-% --- Executes on mouse motion over figure - except title and menu.
-function figure1_WindowButtonMotionFcn(hObject, eventdata, handles)
-% hObject    handle to figure1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes on button press in mouse_select_tgl.
 function mouse_select_tgl_Callback(hObject, eventdata, handles)
 % hObject    handle to mouse_select_tgl (see GCBO)
@@ -1673,74 +1336,13 @@ end
  % Update handles structure
 guidata(hObject, handles);   
 
-
 % --- Executes when user attempts to close figure1.
 function figure1_CloseRequestFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% % % % Hint: delete(hObject) closes the figure
-% % % set(handles.main_axes,'visible','off');
-% % % set(handles.save_btn,'visible','off');
-% % % set(handles.mouse_select_tgl,'visible','off');
-% % % % % % set(handles.select_multi_btn,'visible','on');
-% % % set(handles.img_mode_pnl,'visible','off');
-% % % set(handles.neu_order_pnl,'visible','on');
-% % % drawnow()
-
 delete(hObject);
-
-
-% --- Executes on button press in play_pause_btn.
-function play_pause_btn_Callback(hObject, eventdata, handles)
-% hObject    handle to play_pause_btn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of play_pause_btn
-
-
-% --- Executes on button press in vid_repeat_btn.
-function vid_repeat_btn_Callback(hObject, eventdata, handles)
-% hObject    handle to vid_repeat_btn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of vid_repeat_btn
-
-
-% --- Executes on button press in vid_prev_frame_btn.
-function vid_prev_frame_btn_Callback(hObject, eventdata, handles)
-% hObject    handle to vid_prev_frame_btn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in vid_next_frame_btn.
-function vid_next_frame_btn_Callback(hObject, eventdata, handles)
-% hObject    handle to vid_next_frame_btn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in disp_roi_vid_radbtn.
-function disp_roi_vid_radbtn_Callback(hObject, eventdata, handles)
-% hObject    handle to disp_roi_vid_radbtn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of disp_roi_vid_radbtn
-
-
-% --- Executes on button press in disp_roi_gal_radbtn.
-function disp_roi_gal_radbtn_Callback(hObject, eventdata, handles)
-% hObject    handle to disp_roi_gal_radbtn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of disp_roi_gal_radbtn
-
 
 % --- Executes on button press in make_roi_vid.
 function make_roi_vid_Callback(hObject, eventdata, handles)
@@ -1811,6 +1413,86 @@ function redraw(frame,videoObj,idx,handles,fps)
     if (handles.valid_roi_id(idx) == 0)
         set(handles.main_axes_del_roi_seg_h(idx),'visible','off');
     end
+
+
+% --- Executes on mouse press over axes background.
+function main_axes_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to main_axes (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    
+% --- Executes on key press with focus on figure1 and none of its controls.
+function figure1_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+% key_press(hObject, eventdata, handles)
+
+% --- Executes on mouse press over figure background.
+function figure1_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% % % disp('figure down')
+
+% --- Executes on mouse motion over figure - except title and menu.
+function figure1_WindowButtonMotionFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in play_pause_btn.
+function play_pause_btn_Callback(hObject, eventdata, handles)
+% hObject    handle to play_pause_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of play_pause_btn
+
+
+% --- Executes on button press in vid_repeat_btn.
+function vid_repeat_btn_Callback(hObject, eventdata, handles)
+% hObject    handle to vid_repeat_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of vid_repeat_btn
+
+
+% --- Executes on button press in vid_prev_frame_btn.
+function vid_prev_frame_btn_Callback(hObject, eventdata, handles)
+% hObject    handle to vid_prev_frame_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in vid_next_frame_btn.
+function vid_next_frame_btn_Callback(hObject, eventdata, handles)
+% hObject    handle to vid_next_frame_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in disp_roi_vid_radbtn.
+function disp_roi_vid_radbtn_Callback(hObject, eventdata, handles)
+% hObject    handle to disp_roi_vid_radbtn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of disp_roi_vid_radbtn
+
+
+% --- Executes on button press in disp_roi_gal_radbtn.
+function disp_roi_gal_radbtn_Callback(hObject, eventdata, handles)
+% hObject    handle to disp_roi_gal_radbtn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of disp_roi_gal_radbtn
 
 
 % --- Executes during object deletion, before destroying properties.
