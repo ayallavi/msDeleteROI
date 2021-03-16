@@ -21,7 +21,11 @@ cd(path)
 load('validROIs.mat')
 
 % Correcting ms
-load('ms.mat')
+try
+    load('ms.mat','ms')
+catch
+    load('msConcat.mat','ms')
+end
 ms.FiltTraces = ms.FiltTraces(:,valid_roi);
 ms.RawTraces = ms.RawTraces(:,valid_roi);
 ms.SFPs = ms.SFPs(:,:,valid_roi);

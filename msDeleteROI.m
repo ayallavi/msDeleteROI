@@ -237,7 +237,7 @@ waitbar(.8,f,'Calculating roi index...');
 for roi_ind = 1:size(roi_mat_full,3)
     if roi_ind <= Nroi
         roi = roi_mat(:,:,roi_ind);
-        [i,j] = find(roi == max(max(roi)));
+        [i,j] = find(roi == max(max(roi)),1);
         roi_centroid_mat(roi_ind,:) = [i,j];
         [X, Y] = meshgrid(1:d2s,1:d1s);
         D = sqrt((X-j).^2 + (Y-i).^2); D(i,j) = 1;
